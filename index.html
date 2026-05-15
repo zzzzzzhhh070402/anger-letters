@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>反向自律实验室</title>
+<style>
+/* ===== Reset & Variables ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --text: #1d1d1f;
+  --text2: #86868b;
+  --text3: #aeaeb2;
+  --accent: #e0904a;
+  --accent-hover: #c97a3a;
+  --danger: #d94a4a;
+  --border: #e5e5ea;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --max-w: 680px;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1e;
+    --card: #2c2c2e;
+    --text: #f5f5f7;
+    --text2: #98989d;
+    --text3: #636366;
+    --border: #3a3a3c;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.3);
+  }
+}
+
+html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100dvh; }
+button { font-family: var(--font); cursor: pointer; border: none; outline: none; }
+input, select { font-family: var(--font); }
+
+/* ===== Typography ===== */
+h1 { font-size: 2rem; font-weight: 600; letter-spacing: -0.02em; }
+h2 { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.01em; }
+h3 { font-size: 1.1rem; font-weight: 500; }
+.label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text2); }
+.caption { font-size: 0.85rem; color: var(--text2); }
+
+/* ===== Layout ===== */
+.app-container { max-width: var(--max-w); margin: 0 auto; padding: 24px 20px 80px; }
+.view { display: none; }
+.view.active { display: block; animation: fadeSlideIn 0.4s ease; }
+
+@keyframes fadeSlideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+
+/* ===== Cards ===== */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.card-header h3 { flex: 1; }
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; font-weight: 500;
+  transition: all 0.2s ease; text-decoration: none; white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(224,144,74,0.3); }
+.btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-ghost { background: transparent; color: var(--text2); padding: 8px 12px; }
+.btn-ghost:hover { color: var(--text); background: rgba(0,0,0,0.04); }
+.btn-danger { background: transparent; color: var(--danger); padding: 8px 12px; font-size: 0.85rem; }
+.btn-danger:hover { background: rgba(217,74,74,0.08); }
+.btn-large { padding: 14px 32px; font-size: 1.05rem; border-radius: 24px; }
+.btn-icon { width: 36px; height: 36px; padding: 0; border-radius: 50%; font-size: 1.1rem; }
+
+/* ===== Forms ===== */
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+.form-group .hint { font-size: 0.78rem; color: var(--text2); margin-top: 4px; }
+input[type="text"], input[type="time"], select {
+  width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 0.95rem; background: var(--card); color: var(--text);
+  transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none;
+}
+input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(224,144,74,0.12); }
+
+.slot-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: end;
+  background: var(--bg); padding: 14px; border-radius: var(--radius-sm); margin-bottom: 8px;
+}
+
+/* ===== Status Badge ===== */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+  border-radius: 20px; font-size: 0.82rem; font-weight: 500;
+}
+.status-badge.active { background: #34c75920; color: #34c759; }
+.status-badge.inactive { background: var(--bg); color: var(--text2); }
+.status-badge .dot { width: 7px; height: 7px; border-radius: 50%; }
+.status-badge.active .dot { background: #34c759; }
+.status-badge.inactive .dot { background: var(--text3); }
+
+/* ===== Dashboard ===== */
+.dashboard-header { margin-bottom: 28px; }
+.dashboard-header .logo-area { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.dashboard-header .tagline { color: var(--text2); font-size: 0.95rem; }
+
+.status-card { display: flex; align-items: center; gap: 16px; }
+.status-card .status-icon { font-size: 2.2rem; }
+.status-card .status-text { flex: 1; }
+.status-card .status-title { font-weight: 600; font-size: 1.05rem; }
+.status-card .status-desc { color: var(--text2); font-size: 0.85rem; margin-top: 2px; }
+
+.next-slot-highlight { color: var(--accent); font-weight: 600; }
+
+.goal-item { display: flex; align-items: center; gap: 12px; padding: 14px 0; }
+.goal-item + .goal-item { border-top: 1px solid var(--border); }
+.goal-item .goal-icon { font-size: 1.5rem; flex-shrink: 0; }
+.goal-item .goal-info { flex: 1; min-width: 0; }
+.goal-item .goal-title { font-weight: 500; }
+.goal-item .goal-meta { font-size: 0.8rem; color: var(--text2); }
+
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text2); }
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+.empty-state p { margin-bottom: 16px; }
+
+.quick-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+
+.history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-size: 0.9rem; }
+.history-item + .history-item { border-top: 1px solid var(--border); }
+.history-item .hi-type { font-weight: 500; }
+.history-item .hi-time { color: var(--text2); font-size: 0.82rem; }
+
+/* ===== Setup / Onboarding ===== */
+.setup-hero { text-align: center; padding: 40px 0 20px; }
+.setup-hero .hero-icon { font-size: 4rem; margin-bottom: 16px; }
+.setup-hero h1 { margin-bottom: 8px; }
+.setup-hero p { color: var(--text2); font-size: 1.05rem; max-width: 400px; margin: 0 auto; }
+
+.step-indicator { display: flex; gap: 8px; justify-content: center; margin-bottom: 28px; }
+.step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
+.step-dot.done { background: var(--accent); }
+.step-dot.current { background: var(--accent); width: 24px; border-radius: 4px; }
+
+.mandatory-badge {
+  display: inline-flex; align-items: center; gap: 4px; background: rgba(224,144,74,0.1);
+  color: var(--accent); font-size: 0.75rem; font-weight: 600; padding: 3px 8px; border-radius: 4px;
+}
+
+/* ===== Ceremony Overlay ===== */
+.ceremony-overlay {
+  position: fixed; inset: 0; z-index: 1000; background: #000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.8s ease;
+}
+.ceremony-overlay.active { opacity: 1; pointer-events: auto; }
+.ceremony-content { text-align: center; padding: 20px; animation: fadeSlideIn 1s ease 0.3s both; }
+.ceremony-message { color: #fff; font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 300; letter-spacing: 0.02em; line-height: 1.5; margin-bottom: 32px; }
+.ceremony-sub { color: rgba(255,255,255,0.4); font-size: 0.9rem; letter-spacing: 0.05em; }
+.ceremony-timer { color: rgba(255,255,255,0.25); font-size: 3rem; font-weight: 200; font-variant-numeric: tabular-nums; margin-bottom: 24px; animation: breathe 3s ease-in-out infinite; }
+.ceremony-exit { color: rgba(255,255,255,0.2); background: none; font-size: 0.8rem; padding: 8px 16px; border-radius: 20px; transition: color 0.3s; position: absolute; bottom: 40px; }
+.ceremony-exit:hover { color: rgba(255,255,255,0.5); }
+
+/* ===== Recovery Overlay ===== */
+.recovery-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.6s ease;
+}
+.recovery-overlay.active { opacity: 1; pointer-events: auto; }
+.recovery-overlay.phase-indulge { background: #1a1a2e; }
+.recovery-overlay.phase-buffer { background: #1a2e1a; }
+.recovery-content { text-align: center; padding: 20px; animation: fadeSlideIn 0.6s ease 0.2s both; }
+.recovery-phase-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+.phase-indulge .recovery-phase-label { color: rgba(255,180,100,0.6); }
+.phase-buffer .recovery-phase-label { color: rgba(100,220,120,0.6); }
+.recovery-message { font-size: clamp(1.3rem, 3vw, 2rem); font-weight: 300; color: #fff; line-height: 1.5; margin-bottom: 28px; }
+.recovery-timer { font-size: 4rem; font-weight: 200; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.6); margin-bottom: 24px; }
+.recovery-skip { color: rgba(255,255,255,0.25); background: none; font-size: 0.8rem; padding: 8px 16px; border-radius: 20px; transition: color 0.3s; }
+.recovery-skip:hover { color: rgba(255,255,255,0.5); }
+.recovery-progress { width: 200px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 1px; margin-bottom: 32px; overflow: hidden; }
+.recovery-progress-bar { height: 100%; background: rgba(255,255,255,0.4); transition: width 0.3s linear; }
+
+/* ===== Toast ===== */
+.toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast {
+  background: var(--text); color: var(--card); padding: 12px 20px; border-radius: 20px;
+  font-size: 0.85rem; font-weight: 500; box-shadow: var(--shadow-md);
+  animation: toastIn 0.3s ease; pointer-events: auto; text-align: center;
+}
+@keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ===== Settings Row ===== */
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+.settings-row + .settings-row { border-top: 1px solid var(--border); }
+
+.toggle-switch { position: relative; width: 48px; height: 28px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 14px; transition: 0.3s; cursor: pointer; }
+.toggle-slider::before { content: ''; position: absolute; width: 22px; height: 22px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; }
+.toggle-switch input:checked + .toggle-slider { background: var(--accent); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .app-container { padding: 16px 14px 60px; }
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.2rem; }
+  .card { padding: 18px; }
+  .slot-row { grid-template-columns: 1fr 1fr; }
+  .quick-actions { flex-direction: column; }
+  .btn-large { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-container" id="appContainer">
+  <!-- Dashboard View -->
+  <div class="view active" id="dashboardView">
+    <div class="dashboard-header">
+      <div class="logo-area">
+        <h1>反向自律实验室</h1>
+      </div>
+      <p class="tagline">接纳人性的弱点，让自律从紧绷对抗变成弹性收放</p>
+    </div>
+
+    <!-- Status Card -->
+    <div class="card status-card" id="statusCard">
+      <div class="status-icon" id="statusIcon">🧘</div>
+      <div class="status-text">
+        <div class="status-title" id="statusTitle">加载中…</div>
+        <div class="status-desc" id="statusDesc"></div>
+      </div>
+    </div>
+
+    <!-- Next Slot -->
+    <div class="card" id="nextSlotCard" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div class="label">下一个合法摆烂时段</div>
+          <div style="font-weight:600;font-size:1.05rem;margin-top:4px;" id="nextSlotText"></div>
+          <div class="caption" id="nextSlotCountdown"></div>
+        </div>
+        <button class="btn btn-primary" id="enterCeremonyBtn" style="display:none;">进入摆烂模式</button>
+      </div>
+    </div>
+
+    <!-- Goals -->
+    <div class="card">
+      <div class="card-header">
+        <h3>自律目标</h3>
+        <button class="btn btn-ghost btn-icon" id="addGoalBtn" title="添加目标">+</button>
+      </div>
+      <div id="goalsList"></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button class="btn btn-secondary" id="iSlippedBtn">🤦 我刚才放纵了…</button>
+      <button class="btn btn-ghost" id="editScheduleBtn">✎ 管理摆烂时段</button>
+      <button class="btn btn-ghost" id="viewHistoryBtn">⌛ 记录</button>
+    </div>
+
+    <!-- History (collapsed by default) -->
+    <div class="card" id="historyCard" style="display:none;">
+      <div class="card-header">
+        <h3>近期记录</h3>
+        <button class="btn btn-ghost btn-icon" id="closeHistoryBtn">×</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
+  </div>
+
+  <!-- Setup View -->
+  <div class="view" id="setupView">
+    <div class="setup-hero">
+      <div class="hero-icon">🧬</div>
+      <h1>反向自律实验室</h1>
+      <p>自律最大的敌人不是懒惰，而是报复性摆烂。<br>这里不要求你完美，只要求你科学地放纵。</p>
+    </div>
+
+    <div class="step-indicator" id="stepIndicator">
+      <div class="step-dot done"></div>
+      <div class="step-dot current"></div>
+      <div class="step-dot"></div>
+    </div>
+
+    <div id="setupStepContent"></div>
+
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:24px;" id="setupActions"></div>
+  </div>
+</div>
+
+<!-- Ceremony Overlay -->
+<div class="ceremony-overlay" id="ceremonyOverlay">
+  <div class="ceremony-content">
+    <div class="ceremony-timer" id="ceremonyTimer">--:--</div>
+    <div class="ceremony-message" id="ceremonyMessage">准许你当一团快乐的垃圾</div>
+    <div class="ceremony-sub">受系统保护的合法摆烂时间</div>
+  </div>
+  <button class="ceremony-exit" id="ceremonyExit">结束摆烂，回到现实</button>
+</div>
+
+<!-- Recovery Overlay -->
+<div class="recovery-overlay phase-indulge" id="recoveryOverlay">
+  <div class="recovery-content">
+    <div class="recovery-phase-label" id="recoveryPhaseLabel">阶段一 · 全情放纵</div>
+    <div class="recovery-timer" id="recoveryTimer">20:00</div>
+    <div class="recovery-progress"><div class="recovery-progress-bar" id="recoveryProgressBar" style="width:0%"></div></div>
+    <div class="recovery-message" id="recoveryMessage">没关系，既然已经开始了，就尽情享受这一刻吧</div>
+    <button class="recovery-skip" id="recoverySkip">跳过，直接回归</button>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ===== App State ===== */
+const STORAGE_KEY = 'reverse_discipline_lab';
+const DEFAULT_STATE = {
+  goals: [],
+  slackSlots: [],
+  history: [],
+  notificationsEnabled: false,
+  setupComplete: false
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? { ...DEFAULT_STATE, ...JSON.parse(raw) } : { ...DEFAULT_STATE };
+  } catch { return { ...DEFAULT_STATE }; }
+}
+function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+
+let state = loadState();
+
+/* ===== DOM Refs ===== */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+const dashboardView = $('#dashboardView');
+const setupView = $('#setupView');
+const ceremonyOverlay = $('#ceremonyOverlay');
+const recoveryOverlay = $('#recoveryOverlay');
+const toastContainer = $('#toastContainer');
+
+/* ===== Utilities ===== */
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function fmtTime(mins) { const m = Math.floor(mins); const h = Math.floor(m / 60); const mm = m % 60; return h > 0 ? `${h}小时${mm}分钟` : `${mm}分钟`; }
+function fmtTimeShort(mins) { const m = Math.floor(mins); const h = Math.floor(m / 60); const mm = m % 60; return `${String(h).padStart(2,'0')}:${String(mm).padStart(2,'0')}`; }
+function fmtDate(ts) { const d = new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function dayName(d) { return ['周日','周一','周二','周三','周四','周五','周六'][d]; }
+
+function toast(msg) {
+  const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
+  toastContainer.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 2500);
+}
+
+/* ===== Time & Slot Logic ===== */
+function parseTime(t) { const [h,m] = t.split(':').map(Number); return h * 60 + m; }
+function getNow() { const d = new Date(); return { day: d.getDay(), mins: d.getHours() * 60 + d.getMinutes(), date: d }; }
+
+function isInSlot(slot, now) {
+  if (slot.dayOfWeek !== now.day) return false;
+  const start = parseTime(slot.startTime);
+  const end = parseTime(slot.endTime);
+  if (end <= start) return now.mins >= start || now.mins < end; // overnight
+  return now.mins >= start && now.mins < end;
+}
+
+function getCurrentSlot() {
+  const now = getNow();
+  return state.slackSlots.find(s => isInSlot(s, now)) || null;
+}
+
+function getNextSlot() {
+  const now = getNow();
+  let best = null, bestDist = Infinity;
+  for (let offset = 0; offset < 14; offset++) {
+    const d = new Date(now.date); d.setDate(d.getDate() + offset);
+    const day = d.getDay();
+    for (const slot of state.slackSlots) {
+      if (slot.dayOfWeek !== day) continue;
+      const startMins = parseTime(slot.startTime);
+      const slotDate = new Date(d); slotDate.setHours(0, startMins, 0, 0);
+      const dist = slotDate.getTime() - now.date.getTime();
+      if (offset === 0 && slotDate <= now.date) continue;
+      if (dist > 0 && dist < bestDist) { bestDist = dist; best = { slot, date: slotDate }; }
+    }
+  }
+  return best;
+}
+
+/* ===== Notification ===== */
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  const result = await Notification.requestPermission();
+  return result === 'granted';
+}
+
+function sendNotification(title, body) {
+  if (!state.notificationsEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
+  new Notification(title, { body, icon: '🧬', silent: false });
+}
+
+function checkAndNotifySlots() {
+  const slot = getCurrentSlot();
+  if (slot) {
+    const endTime = slot.endTime;
+    sendNotification('🧘 合法摆烂时间到！', `从现在到 ${endTime}，你可以理直气壮地放纵。`);
+  }
+}
+
+/* ===== View Management ===== */
+function showView(name) {
+  $$('.view').forEach(v => v.classList.remove('active'));
+  if (name === 'dashboard') dashboardView.classList.add('active');
+  else if (name === 'setup') setupView.classList.add('active');
+}
+
+function navigateTo(path) {
+  if (path === 'setup') {
+    showView('setup');
+    renderSetup();
+  } else {
+    showView('dashboard');
+    refreshDashboard();
+  }
+}
+
+/* ===== Ceremony ===== */
+let ceremonyInterval = null, ceremonyEndTime = null;
+const CEREMONY_MESSAGES = [
+  '准许你当一团快乐的垃圾',
+  '此时此刻，摆烂是你的合法权利',
+  '放下所有"应该"，拥抱所有"想要"',
+  '这段时间受系统保护，尽情浪费吧',
+  '你不是在偷懒，你是在执行计划内的放纵',
+  '真正的自律，是懂得何时该松手',
+  '享受这一刻，不需要任何愧疚',
+  '你值得这段毫无负罪感的时光',
+];
+
+function openCeremony() {
+  const slot = getCurrentSlot();
+  if (!slot) { toast('当前不在合法摆烂时段内'); return; }
+  const endMins = parseTime(slot.endTime);
+  const now = getNow();
+  ceremonyEndTime = new Date(now.date); ceremonyEndTime.setHours(0, endMins, 0, 0);
+  if (ceremonyEndTime <= now.date) ceremonyEndTime.setDate(ceremonyEndTime.getDate() + 1);
+
+  ceremonyOverlay.classList.add('active');
+  updateCeremonyMessage();
+  updateCeremonyTimer();
+  ceremonyInterval = setInterval(() => { updateCeremonyTimer(); updateCeremonyMessage(); }, 1000);
+
+  addHistory('ceremony', `合法摆烂 - ${slot.label || dayName(slot.dayOfWeek) + ' ' + slot.startTime}`);
+}
+
+function updateCeremonyTimer() {
+  if (!ceremonyEndTime) return;
+  const remain = Math.max(0, Math.floor((ceremonyEndTime.getTime() - Date.now()) / 1000));
+  const m = Math.floor(remain / 60), s = remain % 60;
+  $('#ceremonyTimer').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  if (remain <= 0) closeCeremony(true);
+}
+
+function updateCeremonyMessage() {
+  const msg = CEREMONY_MESSAGES[Math.floor(Math.random() * CEREMONY_MESSAGES.length)];
+  $('#ceremonyMessage').textContent = msg;
+}
+
+function closeCeremony(auto = false) {
+  ceremonyOverlay.classList.remove('active');
+  if (ceremonyInterval) { clearInterval(ceremonyInterval); ceremonyInterval = null; }
+  ceremonyEndTime = null;
+  if (auto) toast('摆烂时段已结束，欢迎回归。');
+  refreshDashboard();
+}
+
+$('#ceremonyExit').addEventListener('click', () => {
+  addHistory('ceremony_end', '手动结束摆烂');
+  closeCeremony();
+});
+
+$('#enterCeremonyBtn').addEventListener('click', openCeremony);
+
+/* ===== Recovery Ritual ===== */
+let recoveryInterval = null, recoverySeconds = 0, recoveryPhase = 'indulge';
+const INDULGE_DURATION = 20 * 60; // 20 min
+const BUFFER_DURATION = 5 * 60;   // 5 min
+const TOTAL_RECOVERY = INDULGE_DURATION + BUFFER_DURATION;
+
+const INDULGE_MESSAGES = [
+  '没关系，既然已经开始了，就尽情享受这一刻吧',
+  '全情投入这场放纵，不要半推半就',
+  '与其心怀愧疚地偷懒，不如光明正大地摆烂',
+  '这20分钟是你的，谁也不能夺走',
+  '允许自己停下来，是一种能力',
+];
+const BUFFER_MESSAGES = [
+  '放纵结束，现在给自己5分钟慢慢回来',
+  '深呼吸，感受身体和情绪的回落',
+  '伸个懒腰，喝口水，让意识回到当下',
+  '准备好了吗？现实在等你，但它不急',
+  '做得很好，你正在重新掌控自己',
+];
+
+function openRecovery() {
+  recoverySeconds = TOTAL_RECOVERY;
+  recoveryPhase = 'indulge';
+  recoveryOverlay.classList.add('active', 'phase-indulge');
+  recoveryOverlay.classList.remove('phase-buffer');
+  $('#recoveryPhaseLabel').textContent = '阶段一 · 全情放纵';
+  $('#recoveryMessage').textContent = INDULGE_MESSAGES[0];
+  $('#recoveryTimer').textContent = '20:00';
+  $('#recoveryProgressBar').style.width = '0%';
+  $('#recoverySkip').style.display = 'block';
+  updateRecoveryDisplay();
+
+  recoveryInterval = setInterval(() => {
+    recoverySeconds--;
+    if (recoverySeconds <= 0) { closeRecovery(true); return; }
+    if (recoverySeconds === BUFFER_DURATION) {
+      recoveryPhase = 'buffer';
+      recoveryOverlay.classList.remove('phase-indulge');
+      recoveryOverlay.classList.add('phase-buffer');
+      $('#recoveryPhaseLabel').textContent = '阶段二 · 缓冲回归';
+      $('#recoverySkip').style.display = 'none';
+    }
+    updateRecoveryDisplay();
+  }, 1000);
+
+  addHistory('recovery', '快速恢复仪式');
+}
+
+function updateRecoveryDisplay() {
+  const m = Math.floor(recoverySeconds / 60), s = recoverySeconds % 60;
+  $('#recoveryTimer').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const progress = ((TOTAL_RECOVERY - recoverySeconds) / TOTAL_RECOVERY) * 100;
+  $('#recoveryProgressBar').style.width = `${Math.min(100, progress)}%`;
+
+  if (recoveryPhase === 'indulge') {
+    const idx = Math.floor((INDULGE_DURATION - recoverySeconds) / (INDULGE_DURATION / INDULGE_MESSAGES.length));
+    $('#recoveryMessage').textContent = INDULGE_MESSAGES[Math.min(idx, INDULGE_MESSAGES.length - 1)];
+  } else {
+    const bufElapsed = BUFFER_DURATION - recoverySeconds;
+    const idx = Math.floor(bufElapsed / (BUFFER_DURATION / BUFFER_MESSAGES.length));
+    $('#recoveryMessage').textContent = BUFFER_MESSAGES[Math.min(idx, BUFFER_MESSAGES.length - 1)];
+  }
+}
+
+function closeRecovery(auto = false) {
+  recoveryOverlay.classList.remove('active', 'phase-indulge', 'phase-buffer');
+  if (recoveryInterval) { clearInterval(recoveryInterval); recoveryInterval = null; }
+  recoverySeconds = 0;
+  if (auto) {
+    addHistory('recovery_end', '恢复仪式完成');
+    toast('恢复仪式完成。欢迎回来，你做得很好。');
+  }
+  refreshDashboard();
+}
+
+$('#recoverySkip').addEventListener('click', () => {
+  // Skip to buffer phase
+  recoverySeconds = BUFFER_DURATION;
+  recoveryPhase = 'buffer';
+  recoveryOverlay.classList.remove('phase-indulge');
+  recoveryOverlay.classList.add('phase-buffer');
+  $('#recoveryPhaseLabel').textContent = '阶段二 · 缓冲回归';
+  $('#recoverySkip').style.display = 'none';
+  updateRecoveryDisplay();
+  addHistory('recovery_skip', '跳过放纵，直接缓冲');
+});
+
+$('#iSlippedBtn').addEventListener('click', openRecovery);
+
+/* ===== History ===== */
+function addHistory(type, label) {
+  state.history.unshift({ id: genId(), type, label, timestamp: Date.now() });
+  if (state.history.length > 50) state.history = state.history.slice(0, 50);
+  saveState(state);
+}
+
+function renderHistory() {
+  const list = $('#historyList');
+  if (!state.history.length) { list.innerHTML = '<div class="empty-state"><p>暂无记录</p></div>'; return; }
+  list.innerHTML = state.history.slice(0, 20).map(h => `
+    <div class="history-item">
+      <span class="hi-type">${h.label}</span>
+      <span class="hi-time">${fmtDate(h.timestamp)}</span>
+    </div>
+  `).join('');
+}
+
+$('#viewHistoryBtn').addEventListener('click', () => {
+  const card = $('#historyCard');
+  card.style.display = card.style.display === 'none' ? 'block' : 'none';
+  if (card.style.display !== 'none') renderHistory();
+});
+$('#closeHistoryBtn').addEventListener('click', () => { $('#historyCard').style.display = 'none'; });
+
+/* ===== Goals ===== */
+function renderGoals() {
+  const list = $('#goalsList');
+  if (!state.goals.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🎯</div><p>还没有自律目标</p></div>`;
+    return;
+  }
+  list.innerHTML = state.goals.map(g => `
+    <div class="goal-item">
+      <div class="goal-icon">🎯</div>
+      <div class="goal-info">
+        <div class="goal-title">${escHtml(g.title)}</div>
+        ${g.description ? `<div class="goal-meta">${escHtml(g.description)}</div>` : ''}
+      </div>
+      <button class="btn btn-danger btn-icon" data-action="delete-goal" data-id="${g.id}">×</button>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+$('#goalsList').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action="delete-goal"]');
+  if (!btn) return;
+  state.goals = state.goals.filter(g => g.id !== btn.dataset.id);
+  saveState(state);
+  renderGoals();
+  toast('目标已删除');
+});
+
+$('#addGoalBtn').addEventListener('click', () => {
+  const title = prompt('设定自律目标（如：每天学习2小时）');
+  if (!title || !title.trim()) return;
+  const desc = prompt('补充说明（可选）') || '';
+  state.goals.push({ id: genId(), title: title.trim(), description: desc.trim(), createdAt: Date.now() });
+  saveState(state);
+  renderGoals();
+  toast('目标已添加 ✦');
+});
+
+/* ===== Schedule Management ===== */
+function renderSlotsList(containerId) {
+  const container = $(containerId);
+  if (!container) return;
+  if (!state.slackSlots.length) {
+    container.innerHTML = '<p class="caption" style="text-align:center;padding:16px;">尚未设定摆烂时段</p>';
+    return;
+  }
+  container.innerHTML = state.slackSlots.map((s, i) => `
+    <div class="slot-row">
+      <div style="font-weight:500;">${dayName(s.dayOfWeek)}</div>
+      <div>${s.startTime} - ${s.endTime}</div>
+      <div style="font-size:0.82rem;color:var(--text2);">${s.label || ''}</div>
+      <button class="btn btn-danger btn-icon" data-action="delete-slot" data-idx="${i}">×</button>
+    </div>
+  `).join('');
+}
+
+function addSlotForm(containerId) {
+  const container = $(containerId);
+  if (!container) return;
+  const formId = genId();
+  container.insertAdjacentHTML('beforeend', `
+    <div class="slot-row" id="${formId}" style="border:1px dashed var(--accent);padding:10px;">
+      <select id="${formId}-day">
+        ${[0,1,2,3,4,5,6].map(d => `<option value="${d}" ${d===6?'selected':''}>${dayName(d)}</option>`).join('')}
+      </select>
+      <input type="time" id="${formId}-start" value="20:00">
+      <input type="time" id="${formId}-end" value="22:00">
+      <button class="btn btn-primary btn-icon" data-action="save-slot" data-form="${formId}">✓</button>
+    </div>
+  `);
+}
+
+function saveSlotFromForm(formId, containerId = '#slotsContainer') {
+  const day = parseInt($(`#${formId}-day`).value);
+  const startTime = $(`#${formId}-start`).value;
+  const endTime = $(`#${formId}-end`).value;
+  if (!startTime || !endTime) { toast('请填写完整时间'); return; }
+  state.slackSlots.push({ id: genId(), dayOfWeek: day, startTime, endTime, label: `${dayName(day)} ${startTime}-${endTime}` });
+  saveState(state);
+  renderSlotsList(containerId);
+  document.getElementById(formId)?.remove();
+  toast('摆烂时段已添加');
+}
+
+$('#editScheduleBtn').addEventListener('click', () => {
+  showScheduleModal();
+});
+
+function showScheduleModal() {
+  // Simple modal using a card overlay approach
+  const existing = $('#scheduleModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'scheduleModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:900;background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML = `
+    <div class="card" style="width:100%;max-width:500px;max-height:80vh;overflow-y:auto;">
+      <div class="card-header"><h3>管理摆烂时段</h3><button class="btn btn-ghost btn-icon" id="closeScheduleModal">×</button></div>
+      <div style="margin-bottom:12px;">
+        <span class="mandatory-badge">⚡ 必须设定</span>
+        <span class="caption" style="margin-left:8px;">设定自律目标须同时设定合法摆烂时间</span>
+      </div>
+      <div id="slotsContainer"></div>
+      <button class="btn btn-secondary" id="addSlotBtn" style="width:100%;margin-top:8px;">+ 添加摆烂时段</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  renderSlotsList('#slotsContainer');
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.remove();
+    if (e.target.dataset.action === 'delete-slot') {
+      state.slackSlots.splice(parseInt(e.target.dataset.idx), 1);
+      saveState(state);
+      renderSlotsList('#slotsContainer');
+      toast('摆烂时段已移除');
+    }
+    if (e.target.dataset.action === 'save-slot') {
+      saveSlotFromForm(e.target.dataset.form);
+    }
+    if (e.target.id === 'closeScheduleModal') modal.remove();
+    if (e.target.id === 'addSlotBtn') addSlotForm('#slotsContainer');
+  });
+}
+
+/* ===== Setup Flow ===== */
+let setupStep = 1; // 1: goal, 2: slack slot, 3: confirm
+let setupGoal = null;
+
+function renderSetup() {
+  setupStep = 1;
+  setupGoal = null;
+  renderSetupStep();
+}
+
+function renderSetupStep() {
+  const content = $('#setupStepContent');
+  const actions = $('#setupActions');
+  const indicator = $('#stepIndicator');
+
+  indicator.innerHTML = [1,2,3].map(s =>
+    `<div class="step-dot ${s < setupStep ? 'done' : ''} ${s === setupStep ? 'current' : ''}"></div>`
+  ).join('');
+
+  if (setupStep === 1) {
+    content.innerHTML = `
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;margin-bottom:8px;">🎯</div>
+        <h3 style="margin-bottom:6px;">设定你的自律目标</h3>
+        <p class="caption">你想在哪方面变得更自律？</p>
+        <div class="form-group" style="margin-top:16px;">
+          <input type="text" id="setupGoalTitle" placeholder="例如：每天学习2小时" autofocus>
+        </div>
+        <div class="form-group">
+          <input type="text" id="setupGoalDesc" placeholder="补充说明（可选）">
+        </div>
+      </div>
+    `;
+    actions.innerHTML = `<button class="btn btn-primary btn-large" id="setupNext1">下一步 →</button>`;
+    $('#setupNext1').addEventListener('click', () => {
+      const title = $('#setupGoalTitle').value.trim();
+      if (!title) { toast('请填写自律目标'); return; }
+      setupGoal = { title, description: $('#setupGoalDesc').value.trim() };
+      setupStep = 2;
+      renderSetupStep();
+    });
+  } else if (setupStep === 2) {
+    content.innerHTML = `
+      <div class="card" style="text-align:center;">
+        <div style="font-size:2rem;margin-bottom:8px;">🧘</div>
+        <h3 style="margin-bottom:6px;">设定合法摆烂时间 <span class="mandatory-badge">必须设定</span></h3>
+        <p class="caption">对抗报复性摆烂的最好方式，是给它一个合法的时间窗口。<br>设定后，这段时间内你可以理直气壮地放纵。</p>
+        <div id="setupSlotsContainer" style="margin-top:16px;"></div>
+        <button class="btn btn-secondary" id="setupAddSlotBtn" style="margin-top:8px;">+ 添加摆烂时段</button>
+      </div>
+    `;
+    renderSlotsList('#setupSlotsContainer');
+    if (!state.slackSlots.length) addSlotForm('#setupSlotsContainer');
+    actions.innerHTML = `
+      <button class="btn btn-ghost" id="setupBack2">← 上一步</button>
+      <button class="btn btn-primary btn-large" id="setupNext2">下一步 →</button>
+    `;
+    $('#setupBack2').addEventListener('click', () => { setupStep = 1; renderSetupStep(); });
+    $('#setupNext2').addEventListener('click', () => {
+      if (!state.slackSlots.length) { toast('请至少设定一个合法摆烂时段'); return; }
+      setupStep = 3;
+      renderSetupStep();
+    });
+    $('#setupAddSlotBtn').addEventListener('click', () => addSlotForm('#setupSlotsContainer'));
+    // Delegate slot actions
+    $('#setupStepContent').addEventListener('click', (e) => {
+      if (e.target.dataset.action === 'delete-slot') {
+        state.slackSlots.splice(parseInt(e.target.dataset.idx), 1);
+        saveState(state);
+        renderSlotsList('#setupSlotsContainer');
+        if (!state.slackSlots.length) addSlotForm('#setupSlotsContainer');
+      }
+      if (e.target.dataset.action === 'save-slot') saveSlotFromForm(e.target.dataset.form, '#setupSlotsContainer');
+    });
+  } else if (setupStep === 3) {
+    content.innerHTML = `
+      <div class="card" style="text-align:center;">
+        <div style="font-size:3rem;margin-bottom:12px;">✨</div>
+        <h3 style="margin-bottom:8px;">一切就绪</h3>
+        <div style="text-align:left;margin-top:16px;">
+          <p><strong>自律目标：</strong>${escHtml(setupGoal.title)}</p>
+          ${setupGoal.description ? `<p class="caption">${escHtml(setupGoal.description)}</p>` : ''}
+          <p style="margin-top:8px;"><strong>合法摆烂时段：</strong></p>
+          ${state.slackSlots.map(s => `<p class="caption">· ${dayName(s.dayOfWeek)} ${s.startTime} - ${s.endTime}</p>`).join('')}
+        </div>
+        <p class="caption" style="margin-top:12px;">自律不是与自己为敌，而是学会收放自如。</p>
+      </div>
+    `;
+    actions.innerHTML = `
+      <button class="btn btn-ghost" id="setupBack3">← 上一步</button>
+      <button class="btn btn-primary btn-large" id="setupFinish">开始使用</button>
+    `;
+    $('#setupBack3').addEventListener('click', () => { setupStep = 2; renderSetupStep(); });
+    $('#setupFinish').addEventListener('click', finishSetup);
+  }
+}
+
+function finishSetup() {
+  state.goals.push({ id: genId(), title: setupGoal.title, description: setupGoal.description, createdAt: Date.now() });
+  state.setupComplete = true;
+
+  // Prompt for notification
+  requestNotificationPermission().then(granted => {
+    if (granted) {
+      state.notificationsEnabled = true;
+      toast('通知已开启，摆烂时段到时会提醒你');
+    }
+    saveState(state);
+    navigateTo('dashboard');
+  });
+}
+
+/* ===== Dashboard Refresh ===== */
+function refreshDashboard() {
+  const now = getNow();
+  const current = getCurrentSlot();
+  const next = getNextSlot();
+
+  // Status
+  if (current) {
+    $('#statusIcon').textContent = '🧘';
+    $('#statusTitle').textContent = '当前处于合法摆烂时段';
+    $('#statusDesc').textContent = `${current.startTime} - ${current.endTime} · 你可以理直气壮地放纵`;
+    $('#statusCard').querySelector('.status-badge')?.remove();
+    const badge = document.createElement('span');
+    badge.className = 'status-badge active';
+    badge.innerHTML = '<span class="dot"></span>摆烂合法中';
+    $('#statusCard').appendChild(badge);
+  } else {
+    $('#statusIcon').textContent = '🎯';
+    $('#statusTitle').textContent = '自律模式';
+    $('#statusDesc').textContent = '当前不在摆烂时段，保持节奏';
+    const existingBadge = $('#statusCard').querySelector('.status-badge');
+    if (existingBadge) existingBadge.remove();
+  }
+
+  // Next slot
+  if (next) {
+    $('#nextSlotCard').style.display = '';
+    $('#nextSlotText').textContent = `${dayName(next.slot.dayOfWeek)} ${next.slot.startTime} - ${next.slot.endTime}`;
+    const distMins = Math.floor((next.date.getTime() - now.date.getTime()) / 60000);
+    $('#nextSlotCountdown').textContent = distMins < 60 ? `还有 ${distMins} 分钟` : `还有 ${Math.floor(distMins/60)} 小时 ${distMins%60} 分钟`;
+
+    if (current) {
+      $('#enterCeremonyBtn').style.display = '';
+    } else {
+      $('#enterCeremonyBtn').style.display = 'none';
+    }
+  } else {
+    $('#nextSlotCard').style.display = 'none';
+  }
+
+  renderGoals();
+}
+
+/* ===== Init ===== */
+function init() {
+  if (!state.setupComplete) {
+    navigateTo('setup');
+  } else {
+    navigateTo('dashboard');
+  }
+
+  // Periodic check for slot changes & notification
+  setInterval(() => {
+    refreshDashboard();
+    checkAndNotifySlots();
+  }, 30000);
+  refreshDashboard();
+
+  // Handle tab visibility change
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      refreshDashboard();
+      if (ceremonyOverlay.classList.contains('active')) updateCeremonyTimer();
+    }
+  });
+
+  // Notification setup
+  if (state.notificationsEnabled && 'Notification' in window && Notification.permission !== 'granted') {
+    state.notificationsEnabled = false; saveState(state);
+  }
+}
+
+/* ===== Keyboard Shortcuts ===== */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (ceremonyOverlay.classList.contains('active')) closeCeremony();
+    if (recoveryOverlay.classList.contains('active')) closeRecovery();
+    const modal = $('#scheduleModal'); if (modal) modal.remove();
+  }
+});
+
+init();
+</script>
+</body>
+</html>
